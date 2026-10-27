@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}معالجة {{ complaint.ref_no }}{% endblock %}
+{% block content %}
+<section class="panel">
+  <a href="{{ url_for('admin_dashboard') }}">← لوحة الموظف</a>
+  <h1>{{ complaint.ref_no }}</h1>
+
+  <div class="stats">
+    <div>النوع: {{ kind_labels.get(complaint.kind, complaint.kind) }}</div>
+    <div>الفئة: {{ category_labels.get(complaint.category, complaint.category) }}</div>
+    <div>حالة البريد: {{ complaint.email_status }}</div>
+    <div>
+      موافقة النشر:
+      {{ "نعم" if complaint.consent_public else "لا" }}
+    </div>
+  </div>
+
+  <h2>النص الأصلي — للاستخدام الداخلي المخوّل فقط</h2>
+  <div class="private-text">{{ complaint.body_private }}</div>
+
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <label for="status">الحالة</label>
+    <select id="status" name="status">
+      {% for value, label in status_labels.items() %}
+        <option value="{{ value }}"
+          {% if complaint.status == value %}selected{% endif %}>
+          {{ label }}
+        </option>
+      {% endfor %}
+    </select>
+
+    <label for="public_text">النسخة المنقحة للنشر — لا تضع أسماء أو بيانات شخصية</label>
+    <textarea id="public_text" name="public_text" rows="5">{{
+      complaint.public_text or ""
+    }}</textarea>
+    {% if not complaint.consent_public %}
+      <small class="warning-text">
+        لم يوافق صاحب البلاغ على النشر. يمنع نشر نسخة منه في هذه الحالة.
+      </small>
+    {% endif %}
+
+    <label for="response_public">رد الجهة الذي يمكن عرضه لصاحب البلاغ/للعموم</label>
+    <textarea id="response_public" name="response_public" rows="5">{{
+      complaint.response_public or ""
+    }}</textarea>
+
+    <button class="button primary" type="submit">حفظ التعديلات</button>
+  </form>
+</section>
+{% endblock %}

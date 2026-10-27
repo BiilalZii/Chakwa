@@ -1,0 +1,182 @@
+openapi: 3.1.0
+info:
+  title: واجهة سجل الشكاوى — النموذج التجريبي
+  version: 0.2.0
+  description: >
+    واجهة عامة لتحديد المرفق، قراءة البلاغات المنشورة بعد مراجعتها،
+    وإيداع بلاغ جديد. لا تعرض هذه الواجهة الشكوى الأصلية للعامة.
+    تحتوي طلبات الإيداع على حقل مصيدة (website) يُرفض الطلب إذا حُمّل بقيمة.
+
+servers:
+  - url: http://127.0.0.1:5000
+
+paths:
+  /api/v1/branches/{code}:
+    get:
+      summary: معلومات المرفق
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: بيانات المرفق
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code: { type: string }
+                  name_ar: { type: string }
+                  public_url: { type: string }
+                  published_count: { type: integer }
+        "404":
+          description: المرفق غير موجود أو غير نشط
+
+  /api/v1/branches/{code}/complaints:
+    get:
+      summary: قراءة البلاغات المنشورة فقط
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: قائمة البلاغات المنشورة
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/PublicComplaint"
+                  limit: { type: integer }
+                  offset: { type: integer }
+
+  /api/v1/complaints:
+    post:
+      summary: إيداع بلاغ جديد
+      description: >
+        لا يتطلب حسابًا. يطبق التطبيق تحديد معدل (10 طلبات/ساعة لكل IP)
+        وحقل مصيدة للروبوتات. موافقة النشر اختيارية ولا تمنع الإيداع
+        عند رفضها.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - branch_code
+                - type
+                - category
+                - body
+              properties:
+                branch_code:
+                  type: string
+                  example: LGH-PILOT-001
+                type:
+                  type: string
+                  enum: [complaint, suggestion, praise, observation]
+                category:
+                  type: string
+                  enum:
+                    - waiting
+                    - reception
+                    - procedure
+                    - service
+                    - accessibility
+                    - other
+                body:
+                  type: string
+                  minLength: 20
+                  maxLength: 3000
+                consent_public:
+                  type: boolean
+                  default: false
+                website:
+                  type: string
+                  description: حقل مصيدة. يجب إهماله أو إرساله فارغًا.
+      responses:
+        "201":
+          description: تم إنشاء البلاغ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reference: { type: string }
+                  tracking_token: { type: string }
+                  tracking_url: { type: string }
+                  status: { type: string }
+        "400":
+          description: بيانات غير صالحة أو طلب مرفوض
+        "404":
+          description: المرفق غير موجود
+
+  /api/v1/complaints/{reference}/track:
+    get:
+      summary: متابعة بلاغ باستخدام رمز المتابعة السري
+      parameters:
+        - name: reference
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - TrackingToken: []
+      responses:
+        "200":
+          description: حالة البلاغ والرد
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reference: { type: string }
+                  status: { type: string }
+                  status_ar: { type: string }
+                  submitted_at: { type: string, format: date-time }
+                  response: { type: [string, "null"] }
+        "404":
+          description: المرجع أو رمز المتابعة غير صحيح
+
+components:
+  securitySchemes:
+    TrackingToken:
+      type: apiKey
+      in: header
+      name: X-Tracking-Token
+
+  schemas:
+    PublicComplaint:
+      type: object
+      properties:
+        reference: { type: string }
+        type: { type: string }
+        type_ar: { type: string }
+        category: { type: string }
+        category_ar: { type: string }
+        public_text: { type: string }
+        status: { type: string }
+        status_ar: { type: string }
+        submitted_at: { type: string, format: date-time }

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}خطأ {{ code }}{% endblock %}
+{% block content %}
+<section class="panel narrow">
+  <p class="eyebrow">خطأ {{ code }}</p>
+  <h1>تعذر إكمال الطلب</h1>
+  <p>{{ message }}</p>
+  <a class="button secondary" href="{{ url_for('home') }}">العودة إلى الصفحة الرئيسية</a>
+</section>
+{% endblock %}

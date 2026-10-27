@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}إرسال بلاغ{% endblock %}
+{% block content %}
+<section class="panel narrow">
+  <a href="{{ url_for('branch_page', code=branch.code) }}">← رجوع</a>
+  <h1>إرسال بلاغ إلى</h1>
+  <p><strong>{{ branch.name_ar }}</strong></p>
+
+  <form method="post"
+        action="{{ url_for('submit_complaint', code=branch.code) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <label for="kind">نوع البلاغ</label>
+    <select id="kind" name="kind" required>
+      {% for value, label in kind_labels.items() %}
+        <option value="{{ value }}">{{ label }}</option>
+      {% endfor %}
+    </select>
+
+    <label for="category">الفئة</label>
+    <select id="category" name="category" required>
+      {% for value, label in category_labels.items() %}
+        <option value="{{ value }}">{{ label }}</option>
+      {% endfor %}
+    </select>
+
+    <label for="body">نص البلاغ</label>
+    <textarea id="body" name="body" minlength="20" maxlength="3000"
+              rows="8" required
+              placeholder="اشرح ما حدث، ومتى، وما الخدمة التي كنت تطلبها."></textarea>
+    <small>من 20 إلى 3000 حرف. لا تذكر أرقام الهوية أو معلومات صحية أو أسماء أشخاص.</small>
+
+    <label class="checkbox">
+      <input type="checkbox" name="consent_public" value="yes">
+      أوافق على أن تُراجع نسخة منقحة من بلاغي، وقد تُنشر للعموم بعد
+      إزالة البيانات الشخصية. عدم الموافقة لا يمنع إرسال البلاغ.
+    </label>
+
+    {# مصيدة روبوتات: تظل مخفية عن المستخدم البشري وتُرفض أي قيمة فيها #}
+    <div class="hp-field" aria-hidden="true">
+      <label for="website">الموقع الإلكتروني — اترك هذا الحقل فارغًا</label>
+      <input type="text" id="website" name="website" tabindex="-1"
+             autocomplete="off">
+    </div>
+
+    <div class="notice">
+      سيظهر لك رقم مرجعي ورابط متابعة سري. احتفظ بالرابط ولا تشاركه مع الآخرين.
+    </div>
+
+    <button class="button primary" type="submit">إرسال البلاغ</button>
+  </form>
+</section>
+{% endblock %}

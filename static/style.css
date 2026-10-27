@@ -1,0 +1,205 @@
+:root {
+  --navy: #16324f;
+  --blue: #146c94;
+  --light: #f3f6f8;
+  --border: #d9e1e7;
+  --text: #17212b;
+  --muted: #596875;
+  --green: #26734d;
+  --red: #9b3030;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--light);
+  color: var(--text);
+  font-family: Tahoma, Arial, sans-serif;
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+.site-header {
+  background: var(--navy);
+  color: white;
+  padding: 14px max(18px, calc((100% - 1050px) / 2));
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.brand {
+  color: white;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 20px;
+}
+
+.pilot-badge {
+  font-size: 14px;
+  opacity: .9;
+}
+
+.container {
+  width: min(1050px, calc(100% - 28px));
+  margin: 24px auto;
+}
+
+.hero, .panel {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 18px;
+}
+
+.hero {
+  border-top: 5px solid var(--blue);
+}
+
+.narrow { max-width: 720px; margin-inline: auto; }
+
+h1, h2 { line-height: 1.35; }
+h1 { font-size: clamp(25px, 4vw, 36px); }
+h2 { font-size: 22px; }
+
+.eyebrow, .muted, small { color: var(--muted); }
+.eyebrow { font-weight: bold; }
+
+code {
+  background: #eef2f5;
+  padding: 2px 6px;
+  border-radius: 5px;
+  direction: ltr;
+  display: inline-block;
+}
+
+.actions, .section-heading, .card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.button {
+  border: 0;
+  border-radius: 8px;
+  padding: 11px 18px;
+  display: inline-block;
+  text-decoration: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.primary { background: var(--blue); color: white; }
+.secondary { background: #e9eff3; color: var(--navy); }
+
+form { display: grid; gap: 10px; margin-top: 16px; }
+label { font-weight: bold; }
+input, textarea, select {
+  width: 100%;
+  border: 1px solid #aebbc5;
+  border-radius: 7px;
+  padding: 11px;
+  background: white;
+  color: var(--text);
+  font: inherit;
+}
+textarea { resize: vertical; }
+.checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-weight: normal;
+  margin: 10px 0;
+}
+.checkbox input { width: auto; margin-top: 8px; }
+
+/* مصيدة الروبوتات: مخفية عن المستخدم البشري */
+.hp-field {
+  position: absolute;
+  left: -9999px;
+  height: 1px;
+  width: 1px;
+  overflow: hidden;
+}
+
+.notice {
+  background: #eef6f9;
+  border-right: 4px solid var(--blue);
+  padding: 12px;
+  margin: 12px 0;
+}
+.warning { background: #fff5e8; border-color: #aa6a00; }
+
+.complaint-card {
+  border-top: 1px solid var(--border);
+  padding: 15px 0;
+}
+.card-meta { color: var(--muted); font-size: 14px; }
+
+.reference {
+  padding: 12px;
+  background: #eef6f9;
+  border-radius: 8px;
+  font-size: 24px;
+  font-weight: bold;
+  direction: ltr;
+  text-align: center;
+}
+
+.private-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: #f7f8f9;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.response {
+  border-right: 4px solid var(--green);
+  background: #f1f8f3;
+  padding: 12px;
+  margin-top: 12px;
+}
+
+.alert { padding: 12px; margin: 10px 0; border-radius: 8px; }
+.alert.error { color: var(--red); background: #fff0f0; }
+.alert.success { color: var(--green); background: #eef8f0; }
+.warning-text { color: var(--red); }
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin: 16px 0;
+}
+.stats > div {
+  background: #f5f7f8;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; min-width: 720px; }
+th, td { padding: 10px; border-bottom: 1px solid var(--border); text-align: right; }
+th { background: #f1f4f6; }
+
+.site-footer {
+  padding: 20px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+@media (max-width: 600px) {
+  body { font-size: 16px; }
+  .hero, .panel { padding: 17px; }
+  .site-header { align-items: flex-start; }
+}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}لوحة الموظف{% endblock %}
+{% block content %}
+<section class="panel">
+  <div class="section-heading">
+    <h1>لوحة معالجة البلاغات</h1>
+    <form method="post" action="{{ url_for('admin_logout') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="button secondary" type="submit">خروج</button>
+    </form>
+  </div>
+
+  <div class="stats">
+    <div>جديد: <strong>{{ counts.received }}</strong></div>
+    <div>قيد المعالجة: <strong>{{ counts.in_review }}</strong></div>
+    <div>تم الرد: <strong>{{ counts.answered }}</strong></div>
+    <div>مغلق: <strong>{{ counts.closed }}</strong></div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>المرجع</th>
+          <th>المرفق</th>
+          <th>النوع</th>
+          <th>الفئة</th>
+          <th>الحالة</th>
+          <th>البريد</th>
+          <th>التاريخ</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for c in complaints %}
+        <tr>
+          <td><a href="{{ url_for('admin_detail', ref=c.ref_no) }}">{{ c.ref_no }}</a></td>
+          <td>{{ c.branch.name_ar }}</td>
+          <td>{{ kind_labels.get(c.kind, c.kind) }}</td>
+          <td>{{ category_labels.get(c.category, c.category) }}</td>
+          <td>{{ status_labels.get(c.status, c.status) }}</td>
+          <td>{{ c.email_status }}</td>
+          <td>{{ c.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="7">لا توجد بلاغات.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

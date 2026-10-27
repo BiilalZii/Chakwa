@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}{{ branch.name_ar }} — سجل الشكاوى{% endblock %}
+{% block content %}
+<section class="hero">
+  <p class="eyebrow">المرفق المحدد بواسطة رمز QR</p>
+  <h1>{{ branch.name_ar }}</h1>
+  <p>{{ branch.description_ar or "يمكنك تقديم شكوى أو اقتراح أو ملاحظة." }}</p>
+
+  <div class="actions">
+    <a class="button primary"
+       href="{{ url_for('new_complaint', code=branch.code) }}">
+      أرسل بلاغًا
+    </a>
+    <a class="button secondary"
+       href="{{ url_for('public_archive', code=branch.code) }}">
+      اطّلع على البلاغات المنشورة
+    </a>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>الشفافية</h2>
+  <p>
+    عدد البلاغات التي نُشرت بعد المراجعة:
+    <strong>{{ public_count }}</strong>
+  </p>
+  <p class="muted">
+    لا تظهر الشكوى للعامة تلقائيًا. النشر يقتصر على نسخة راجعها الموظف
+    المخوّل بعد إزالة البيانات الشخصية، وبموافقة صاحب البلاغ.
+  </p>
+</section>
+
+<section class="panel">
+  <div class="section-heading">
+    <h2>أحدث البلاغات المنشورة</h2>
+    <a href="{{ url_for('public_archive', code=branch.code) }}">عرض الكل</a>
+  </div>
+
+  {% if recent %}
+    {% for c in recent %}
+      <article class="complaint-card">
+        <div class="card-meta">
+          <span>{{ c.ref_no }}</span>
+          <span>{{ category_labels.get(c.category, c.category) }}</span>
+          <span>{{ status_labels.get(c.status, c.status) }}</span>
+        </div>
+        <p>{{ c.public_text|truncate(220) }}</p>
+      </article>
+    {% endfor %}
+  {% else %}
+    <p class="muted">لا توجد بلاغات منشورة حاليًا.</p>
+  {% endif %}
+</section>
+{% endblock %}
