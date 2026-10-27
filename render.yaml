@@ -1,0 +1,38 @@
+# مخطط نشر تجريبي بنقرة واحدة على Render (https://render.com)
+# رابط النشر: https://render.com/deploy?repo=https://github.com/BiilalZii/Chakwa
+# الخطة المجانية كافية لعرض تجريبي؛ البيانات على SQLite تُصفّر عند إعادة النشر
+# لأن القرص المؤقت لا يحتفظ بالملفات — للإنتاج استخدم PostgreSQL عبر DATABASE_URL.
+services:
+  - type: web
+    name: chakwa-demo
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /api/v1/branches/LGH-PILOT-001
+    envVars:
+      - key: APP_ENV
+        value: development
+      - key: SECRET_KEY
+        generateValue: true
+      - key: RATELIMIT_STORAGE_URI
+        value: memory://
+      - key: PUBLIC_BASE_URL
+        sync: false
+      # بصمة كلمة المرور التجريبية Chakwa-2026 — غيّرها بعد أول دخول
+      - key: ADMIN_PASSWORD_HASH
+        value: "scrypt:32768:8:1$JQWQOfMvYtxccztj$e418841ced4fe9a55813400ab5fa16c3ce64b754000bd30ca0f60119cfcaa1200cc1ac716f180bf9677cf1cc4774a33aefe7886582cbad9428d25893dda8ab2f"
+      # السماح بتضمين النسخة المنشورة داخل إطار المعاينة
+      - key: FRAME_ANCESTORS
+        value: "*"
+      - key: SESSION_COOKIE_SAMESITE
+        value: None
+      - key: SESSION_COOKIE_SECURE
+        value: "true"
+      - key: RETENTION_DAYS
+        value: "730"
+      - key: NOTIFICATION_MAX_ATTEMPTS
+        value: "5"
+      - key: LOGIN_MAX_FAILURES
+        value: "5"
+      - key: LOGIN_LOCKOUT_MINUTES
+        value: "15"
