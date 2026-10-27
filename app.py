@@ -43,6 +43,16 @@ if not secret_key:
 
 os.makedirs("instance", exist_ok=True)
 
+IS_PRODUCTION = os.getenv("APP_ENV") == "production"
+
+# سياسة التأطير (CSP frame-ancestors):
+# - الإنتاج: 'none' لمنع أي تضمين في إطار خارجي.
+# - المعاينة/التطوير: '*' للسماح لمنصة المعاينة بتضمين التطبيق،
+#   أو قائمة مضيقات محددة عبر المتغير FRAME_ANCESTORS.
+FRAME_ANCESTORS = os.getenv("FRAME_ANCESTORS") or (
+    "'none'" if IS_PRODUCTION else "*"
+)
+
 app = Flask(__name__)
 app.config.update(
     SECRET_KEY=secret_key,
@@ -52,8 +62,15 @@ app.config.update(
     SQLALCHEMY_TRACK_MODIFICATIONS=False,
     MAX_CONTENT_LENGTH=1_000_000,
     SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SAMESITE="Lax",
-    SESSION_COOKIE_SECURE=(os.getenv("APP_ENV") == "production"),
+    # داخل إطار المعاينة (cross-site) تحتاج الجلسة إلى SameSite=None مع Secure
+    # حتى تُرسل كوكيز الجلسة وCSRF مع طلبات النماذج.
+    SESSION_COOKIE_SAMESITE=os.getenv(
+        "SESSION_COOKIE_SAMESITE", "Lax"
+    ),
+    SESSION_COOKIE_SECURE=os.getenv(
+        "SESSION_COOKIE_SECURE",
+        "true" if IS_PRODUCTION else "false",
+    ).lower() == "true",
 )
 
 db = SQLAlchemy(app)
@@ -230,7 +247,10 @@ def inject_labels():
 @app.after_request
 def security_headers(response):
     response.headers["X-Content-Type-Options"] = "nosniff"
-    response.headers["X-Frame-Options"] = "DENY"
+    # X-Frame-Options يُرسل DENY فقط عندما تمنع سياسة CSP كل تأطير،
+    # حتى لا يكسر ترويسةَ frame-ancestors المرنة في بيئة المعاينة.
+    if FRAME_ANCESTORS == "'none'":
+        response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "no-referrer"
     response.headers["Permissions-Policy"] = "geolocation=()"
     response.headers["Content-Security-Policy"] = (
@@ -239,10 +259,10 @@ def security_headers(response):
         "img-src 'self'; "
         "object-src 'none'; "
         "base-uri 'self'; "
-        "frame-ancestors 'none'; "
+        f"frame-ancestors {FRAME_ANCESTORS}; "
         "form-action 'self'"
     )
-    if os.getenv("APP_ENV") == "production":
+    if IS_PRODUCTION:
         response.headers["Strict-Transport-Security"] = (
             "max-age=31536000; includeSubDomains"
         )
@@ -510,6 +530,77 @@ def init_db():
         db.session.commit()
 
     click.echo("تم إنشاء قاعدة البيانات والمرفق التجريبي.")
+
+
+@app.cli.command("seed-demo")
+def seed_demo():
+    """بذر بيانات تجريبية لعرض المعاينة (أمر عاطل لا يكرر البيانات)."""
+    db.create_all()
+    branch = Branch.query.filter_by(code="LGH-PILOT-001").first()
+    if not branch:
+        branch = Branch(
+            code="LGH-PILOT-001",
+            name_ar="مرفق تجريبي — يحدد لاحقًا بالتنسيق مع الولاية",
+            description_ar="نموذج تقني أولي غير رسمي.",
+            supervisor_email=os.getenv("PILOT_SUPERVISOR_EMAIL") or None,
+            is_active=True,
+        )
+        db.session.add(branch)
+        db.session.flush()
+
+    if Complaint.query.filter_by(branch_id=branch.id).count() > 0:
+        click.echo("توجد بلاغات سابقًا؛ تم تخطي البذر.")
+        return
+
+    now = utcnow()
+
+    def make(kind, category, body, consent, status, public_text,
+             response, days_ago):
+        token = secrets.token_urlsafe(32)
+        created = now - timedelta(days=days_ago)
+        complaint = Complaint(
+            branch_id=branch.id, kind=kind, category=category,
+            body_private=body, consent_public=consent, status=status,
+            public_text=public_text, response_public=response,
+            tracking_token_hash=hashlib.sha256(
+                token.encode("utf-8")
+            ).hexdigest(),
+            content_hash=hashlib.sha256(
+                body.encode("utf-8")
+            ).hexdigest(),
+            email_status="not_configured",
+            retention_until=created.date() + timedelta(days=RETENTION_DAYS),
+            created_at=created, updated_at=created,
+        )
+        db.session.add(complaint)
+        db.session.flush()
+        complaint.ref_no = f"LGH-{created.year}-{complaint.id:06d}"
+        db.session.add(AuditEvent(
+            complaint_id=complaint.id, actor="citizen",
+            action="submitted", details={"channel": "web_qr"},
+            created_at=created,
+        ))
+
+    make("complaint", "waiting",
+         "انتظرت أكثر من ساعة ونصف في طابور استقبال الملفات رغم أن عدد "
+         "الموظفين كان كافيًا، ولم يكن هناك نظام ترقيم واضح.",
+         True, "answered",
+         "طول مدة الانتظار في مصلحة الاستقبال وغياب نظام ترقيم مرئي للمراجعين.",
+         "تم تركيب نظام ترقيم آلي وتعزيز مكتب الاستقبال بموظف إضافي "
+         "خلال فترات الذروة.",
+         12)
+    make("suggestion", "accessibility",
+         "أقترح تخصيص ممر مناسب لكراسي المتحركين عند المدخل الرئيسي "
+         "لأن الممر الحالي ضيق جدًا.",
+         True, "in_review",
+         "اقتراح بتحسين ولوجية المدخل الرئيسي لذوي الحركة المحدودة.",
+         None, 5)
+    make("complaint", "reception",
+         "بلاغ خاص يتضمن بيانات شخصية - غير موافق على النشر.",
+         False, "received", None, None, 1)
+
+    db.session.commit()
+    click.echo("تم بذر ثلاثة بلاغات تجريبية.")
 
 
 @app.cli.command("send-notifications")
@@ -936,6 +1027,14 @@ def admin_detail(ref):
         return redirect(url_for("admin_detail", ref=ref))
 
     return render_template("admin_detail.html", complaint=complaint)
+
+
+# في بيئات غير الإنتاج، نُنشئ الجداول تلقائيًا عند الإقلاع حتى تتعافى
+# المعاينة وحدها بعد إعادة ضبط مساحة العمل. الإنتاج يعتمد schema.sql
+# وأدوات الترحيل، ولا يُنشئ أي شيء ضمنيًا.
+if not IS_PRODUCTION:
+    with app.app_context():
+        db.create_all()
 
 
 if __name__ == "__main__":

@@ -190,6 +190,27 @@ def test_qr_png_endpoint(client):
     assert response.mimetype == "image/png"
 
 
+def test_preview_headers_allow_iframe_embedding(client):
+    # بيئة الاختبار تطابق بيئة المعاينة: التأطير مسموح به
+    response = client.get(f"/q/{BRANCH_CODE}")
+    assert "X-Frame-Options" not in response.headers
+    assert (
+        "frame-ancestors *"
+        in response.headers["Content-Security-Policy"]
+    )
+
+
+def test_strict_frame_policy_sets_deny_headers(client, monkeypatch):
+    import app as app_module
+    monkeypatch.setattr(app_module, "FRAME_ANCESTORS", "'none'")
+    response = client.get(f"/q/{BRANCH_CODE}")
+    assert response.headers.get("X-Frame-Options") == "DENY"
+    assert (
+        "frame-ancestors 'none'"
+        in response.headers["Content-Security-Policy"]
+    )
+
+
 def test_notification_worker_sends_queued_mail(client, app, runner, monkeypatch):
     submit_complaint(client)
     monkeypatch.setenv("SMTP_HOST", "mail.example.dz")
