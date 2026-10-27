@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}البلاغات المنشورة — {{ branch.name_ar }}{% endblock %}
+{% block content %}
+<section class="panel">
+  <a href="{{ url_for('branch_page', code=branch.code) }}">← صفحة المرفق</a>
+  <h1>البلاغات المنشورة</h1>
+  <p>{{ branch.name_ar }}</p>
+
+  <form method="get" class="search-form">
+    <label for="q">بحث في النصوص المنشورة</label>
+    <input id="q" name="q" value="{{ search }}" maxlength="100">
+    <button class="button secondary" type="submit">بحث</button>
+  </form>
+
+  {% for c in complaints %}
+    <article class="complaint-card">
+      <div class="card-meta">
+        <span>{{ c.ref_no }}</span>
+        <span>{{ category_labels.get(c.category, c.category) }}</span>
+        <span>{{ status_labels.get(c.status, c.status) }}</span>
+        <span>{{ c.created_at.strftime("%Y-%m-%d") }}</span>
+      </div>
+      <p>{{ c.public_text }}</p>
+      {% if c.response_public %}
+        <div class="response">
+          <strong>رد الجهة:</strong>
+          <p>{{ c.response_public }}</p>
+        </div>
+      {% endif %}
+    </article>
+  {% else %}
+    <p class="muted">لا توجد نتائج منشورة.</p>
+  {% endfor %}
+</section>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}متابعة البلاغ {{ complaint.ref_no }}{% endblock %}
+{% block content %}
+<section class="panel narrow">
+  <p class="eyebrow">تم حفظ البلاغ</p>
+  <h1>رقم المتابعة</h1>
+  <div class="reference">{{ complaint.ref_no }}</div>
+
+  <p>
+    الحالة الحالية:
+    <strong>{{ status_labels.get(complaint.status, complaint.status) }}</strong>
+  </p>
+  <p class="muted">تاريخ الإيداع: {{ complaint.created_at.strftime("%Y-%m-%d %H:%M") }} UTC</p>
+
+  <details>
+    <summary>عرض نص البلاغ الذي أرسلته</summary>
+    <p class="private-text">{{ complaint.body_private }}</p>
+  </details>
+
+  {% if complaint.response_public %}
+    <section class="response">
+      <h2>الرد</h2>
+      <p>{{ complaint.response_public }}</p>
+    </section>
+  {% else %}
+    <p class="muted">لم يُسجل رد بعد.</p>
+  {% endif %}
+
+  <label for="tracking-link">رابط المتابعة السري — احتفظ به</label>
+  <input id="tracking-link" type="text" readonly value="{{ tracking_url }}">
+
+  <div class="notice warning">
+    الرابط السري يتيح لمن يملكه متابعة البلاغ. لا ترسله إلى أشخاص غير موثوقين.
+  </div>
+</section>
+{% endblock %}

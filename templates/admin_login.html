@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}دخول الموظف{% endblock %}
+{% block content %}
+<section class="panel narrow">
+  <h1>دخول الموظف</h1>
+  {% if error %}<div class="alert error">{{ error }}</div>{% endif %}
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="password">كلمة المرور</label>
+    <input id="password" name="password" type="password" required
+           autocomplete="current-password">
+    <button class="button primary" type="submit">دخول</button>
+  </form>
+  <p class="muted">
+    مصادقة تجريبية بكلمة مرور واحدة مع قفل مؤقت بعد خمس محاولات فاشلة.
+    لا تصلح وحدها لنظام حكومي إنتاجي.
+  </p>
+</section>
+{% endblock %}

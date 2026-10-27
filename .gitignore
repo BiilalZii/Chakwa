@@ -1,0 +1,32 @@
+# بيئات Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# إعدادات وأسرار محلية
+.env
+.flaskenv
+
+# قواعد البيانات والملفات التشغيلية
+instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# أصول مبنية وتغطية
+build/
+dist/
+htmlcov/
+.coverage
+coverage.xml
+
+# ملفات المحرر والنظام
+.vscode/
+.idea/
+.DS_Store
