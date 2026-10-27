@@ -1,9 +1,17 @@
-"""تهيئة بيئة الاختبار قبل استيراد التطبيق."""
+"""تهيئة بيئة الاختبار قبل استيراد التطبيق.
+
+مهم: يجب ضبط DATABASE_URL على قاعدة مؤقتة قبل أي استيراد لـ app، حتى
+يُنشأ محرك SQLAlchemy مرة واحدة على القاعدة المؤقتة ولا تمس الاختبارات
+قاعدة بيانات المعاينة في instance/.
+"""
 import os
+import tempfile
 
 import pytest
 from werkzeug.security import generate_password_hash
 
+_TEST_DB_PATH = os.path.join(tempfile.gettempdir(), "chakwa_test.db")
+os.environ["DATABASE_URL"] = f"sqlite:///{_TEST_DB_PATH}"
 os.environ.setdefault("SECRET_KEY", "test-secret-key")
 os.environ.setdefault("APP_ENV", "test")
 os.environ.setdefault("RATELIMIT_STORAGE_URI", "memory://")
@@ -21,10 +29,9 @@ VALID_BODY = "نص تجريبي طويل بما يكفي ليتجاوز عشري
 
 
 @pytest.fixture()
-def app(tmp_path):
+def app():
     flask_app.config.update(
         TESTING=True,
-        SQLALCHEMY_DATABASE_URI=f"sqlite:///{tmp_path / 'test.db'}",
         WTF_CSRF_ENABLED=False,
     )
     # نعطّل محدد المعدل في الاختبارات؛ القفل المؤقت له آلية مستقلة نختبرها.
